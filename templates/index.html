@@ -8,43 +8,43 @@
 
 <style>
 
-body{
-    margin:0;
-    font-family:Arial,sans-serif;
-    background:#f4f4f4;
-}
-
+html, body {height: 100%;}
 .chat-container{
-    width:90%;
     max-width:700px;
-    margin:30px auto;
+    height: 100%;
     background:#fff;
     border-radius:15px;
     overflow:hidden;
+    margin: 0px auto;
     box-shadow:0 0 10px rgba(0,0,0,.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-wrap: nowrap;
 }
 
 .chat-header{
     background-image: linear-gradient(270deg, #4ec7e4 0%, #53b2ac 100%);
     color:white;
     padding:15px;
-    text-align:center;
-    font-size:22px;
+    /* text-align:center; */
+    font-size:20px;
     font-weight:bold;
 }
 
 
 .chat-box{
-    height:600px;
     overflow-y:auto;
     padding:15px;
     background-color: #FFFFFFB3;
-    background-image: url("https://lumacompanion.com/wp-content/uploads/2026/06/velvet_banner_bg.png");
+    background-image: url("velvet_banner_bg.png");
     background-position: top center;
     background-repeat: no-repeat;
     background-size: cover;
     font-size: 14px;
     line-height: 1.4;
+    height: 100%;
+    flex: 1 1 0;
 }
 
 .user{
@@ -95,7 +95,7 @@ button{
     margin-left:10px;
     padding:12px 20px;
     border:none;
-    background-image: linear-gradient(270deg, #4ec7e4 0%, #53b2ac 100%);
+    background-image: url("https://lumacompanion.com/wpcontent/uploads/2026/06/velvet_banner_bg.png");;
     color:white;
     border-radius:8px;
     cursor:pointer;
@@ -109,21 +109,24 @@ button:hover{
 
 #popup{
     display:none;
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,.7);
-    justify-content:center;
-    align-items:center;
-    z-index:9999;
+    position:absolute;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100% - 30px);
+    margin: 0px auto;
+    box-shadow: 0px 0px 20px 15px #50c0d233;
+    border-radius: 15px;
 }
 
 .popup-content{
     position:relative;
     background:white;
     padding:30px;
-    border-radius:15px;
     text-align:center;
-    width:350px;
 }
 
 .close-btn{
@@ -132,6 +135,16 @@ button:hover{
     right:15px;
     font-size:22px;
     cursor:pointer;
+}
+
+h2 {
+    margin: 20px 0px 10px;
+    font-size: 20px;
+    line-height: 1.4;
+}
+p {
+    font-size: 14px;
+    line-height: 1.4;
 }
 
 .popup-content a{
@@ -146,6 +159,36 @@ button:hover{
 
 .popup-content a:hover{
     opacity:.9;
+}
+
+@media screen and (max-width: 480px) {
+
+}
+
+/* Chrome, Edge, Safari */
+.chat-box::-webkit-scrollbar{
+    width: 10px;
+}
+
+.chat-box::-webkit-scrollbar-track{
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px;
+}
+
+.chat-box::-webkit-scrollbar-thumb{
+    background-image: linear-gradient(270deg, #4ec7e4 0%, #53b2ac 100%);
+    border-radius: 20px;
+    border: 2px solid rgba(255,255,255,0.15);
+}
+
+.chat-box::-webkit-scrollbar-thumb:hover{
+    background-image: linear-gradient(270deg, #53b2ac 0%, #4ec7e4 100%);
+}
+
+/* Firefox */
+.chat-box{
+    scrollbar-width: thin;
+    scrollbar-color: #53b2ac rgba(255,255,255,0.15);
 }
 
 </style>
