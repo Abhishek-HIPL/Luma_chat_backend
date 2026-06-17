@@ -12,8 +12,7 @@ CORS(app)
 message_count = 0
 
 client = OpenAI(
-    api_key=os.getenv("GROQ_API_KEY"),
-    base_url="https://api.groq.com/openai/v1"
+    api_key=os.getenv("OPENAI_API_KEY")
 )
 
 @app.route("/")
@@ -52,7 +51,7 @@ def chat():
 
     try:
         response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system",
@@ -61,7 +60,7 @@ def chat():
 
                     Rules:
                     - Talk in natural English.
-                    - Use emojis naturally 😊🔥✨🚀🥱😪😫.
+                    - Use emojis naturally 😊🔥✨🚀.
                     - Be friendly and conversational.
                     - Keep replies engaging.
                     - Sound like a helpful friend.
@@ -71,10 +70,14 @@ def chat():
                     "role": "user",
                     "content": message
                 }
-            ]
+            ],
+            temperature=0.8,
+            max_tokens=500
         )
 
         reply = response.choices[0].message.content
+
+
 
         return jsonify({
             "locked": False,
