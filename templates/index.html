@@ -44,7 +44,7 @@ margin: 0px;
     overflow-y:auto;
     padding:15px;
     background-color: #FFFFFFB3;
-    background-image: url("velvet_banner_bg.png");
+    background-image: url("/static/velvet_banner_bg.png");
     background-position: top center;
     background-repeat: no-repeat;
     background-size: cover;
@@ -58,6 +58,8 @@ margin: 0px;
     text-align:right;
     margin:10px 0;
 }
+
+
 
 .bot{
     text-align:left;
@@ -201,6 +203,8 @@ p {
 }
 
 </style>
+
+<script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
 </head>
 
 <body>
@@ -257,8 +261,18 @@ p {
 </div>
 
 <script>
+let visitorId = "";
+
+(async () => {
+    const fp = await FingerprintJS.load();
+    const result = await fp.get();
+    visitorId = result.visitorId;
+})();
+
 
 let chatLocked = localStorage.getItem("chatLocked") === "true";
+
+
 window.onload = function(){
 
     const savedChat = localStorage.getItem("chatHistory");
@@ -324,8 +338,9 @@ async function sendMessage(){
                     "Content-Type":"application/json"
                 },
                 body:JSON.stringify({
-                    message:text
-                })
+    message:text,
+    fingerprint:visitorId
+})
             }
         );
 

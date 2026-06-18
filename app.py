@@ -3,13 +3,29 @@ from flask_cors import CORS
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
+import sqlite3
 
 load_dotenv()
+
+def init_db():
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        user_key TEXT PRIMARY KEY,
+        message_count INTEGER DEFAULT 0
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+init_db()
 
 app = Flask(__name__)
 CORS(app)
 
-message_count = 0
 
 client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY")
@@ -22,9 +38,23 @@ def home():
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    global message_count
-
     data = request.get_json()
+
+    if not data:
+        return jsonify({
+            "locked": False,
+            "reply": "Invalid request"
+        })
+
+    fingerprint = data.get("fingerprint", "")
+
+    ip = request.headers.get(
+        "X-Forwarded-For",
+        request.remote_addr
+    )
+
+    user_key = f"{fingerprint}_{ip}"
+
 
     if not data:
         return jsonify({
@@ -40,15 +70,39 @@ def chat():
             "reply": " Please enter a message."
         })
 
-    message_count += 1
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
 
-    # Free limit
-    if message_count > 5:
+    cursor.execute(
+        "SELECT message_count FROM users WHERE user_key=?",
+        (user_key,)
+    )
+
+    row = cursor.fetchone()
+
+    if row:
+        count = row[0]
+    else:
+        count = 0
+
+    if count >= 5:
+        conn.close()
+
         return jsonify({
             "locked": True,
-            "reply": " Free limit reached. App download karke continue karein."
+            "reply": "Free limit reached"
         })
 
+    count += 1
+
+    cursor.execute("""
+    INSERT OR REPLACE INTO users
+    (user_key, message_count)
+    VALUES (?, ?)
+    """, (user_key, count))
+
+    conn.commit()
+    conn.close()
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -66,6 +120,7 @@ def chat():
                     - Motivation
                     - Entertainment
                     - Light-hearted discussions
+                    - Image generation when user asks for pictures, wallpapers, art, avatars, or illustrations.
 
                     Restricted topics:
                     - Coding
@@ -94,7 +149,7 @@ def chat():
 
                     - 😄 I can't really help with that topic, but I'd love to chat about movies, music, hobbies, or daily life.
 
-                    - 🌸 That's not something I cover, but I'm always here for a good conversation.
+                    - 🌸 That's not something I cover,but I'm always here for a good conversation.
 
                     - 💬 Let's switch to something more fun. What's something exciting that happened recently?
 
@@ -113,12 +168,10 @@ def chat():
 
         reply = response.choices[0].message.content
 
-
-
         return jsonify({
             "locked": False,
             "reply": reply,
-            "remaining": max(0, 5 - message_count)
+            "remaining": max(0, 5 - count)
         })
 
     except Exception as e:
@@ -126,6 +179,8 @@ def chat():
             "locked": False,
             "reply": f" Error: {str(e)}"
         }), 500
+
+
 
 
 if __name__ == "__main__":
