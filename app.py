@@ -3,22 +3,34 @@ from flask_cors import CORS
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
-import sqlite3
+import mysql.connector
+
 
 load_dotenv()
 
+def get_db():
+    return mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="",
+        database="luma_chat"
+    )
+
+
+
 def init_db():
-    conn = sqlite3.connect("users.db")
+    conn = get_db()
     cursor = conn.cursor()
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
-        user_key TEXT PRIMARY KEY,
-        message_count INTEGER DEFAULT 0
+        user_key VARCHAR(255) PRIMARY KEY,
+        message_count INT DEFAULT 0
     )
     """)
 
     conn.commit()
+    cursor.close()
     conn.close()
 
 init_db()
@@ -70,11 +82,11 @@ def chat():
             "reply": " Please enter a message."
         })
 
-    conn = sqlite3.connect("users.db")
+    conn = get_db()
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT message_count FROM users WHERE user_key=?",
+        "SELECT message_count FROM users WHERE user_key=%s",
         (user_key,)
     )
 
@@ -86,6 +98,7 @@ def chat():
         count = 0
 
     if count >= 5:
+        cursor.close()
         conn.close()
 
         return jsonify({
@@ -96,12 +109,15 @@ def chat():
     count += 1
 
     cursor.execute("""
-    INSERT OR REPLACE INTO users
+    INSERT INTO users
     (user_key, message_count)
-    VALUES (?, ?)
-    """, (user_key, count))
+    VALUES (%s, %s)
+    ON DUPLICATE KEY UPDATE
+    message_count=%s
+    """, (user_key, count, count))
 
     conn.commit()
+    cursor.close()
     conn.close()
     try:
         response = client.chat.completions.create(
@@ -179,6 +195,8 @@ def chat():
             "locked": False,
             "reply": f" Error: {str(e)}"
         }), 500
+
+
 
 
 
