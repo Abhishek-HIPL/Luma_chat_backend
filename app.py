@@ -25,7 +25,8 @@ def init_db():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
         user_key VARCHAR(255) PRIMARY KEY,
-        message_count INT DEFAULT 0
+        message_count INT DEFAULT 0,
+        image_count INT DEFAULT 0
     )
     """)
 
@@ -75,6 +76,30 @@ def chat():
         })
 
     message = data.get("message", "").strip()
+    # image generation
+
+    image_keywords = [
+        "image",
+        "picture",
+        "pic",
+        "photo",
+        "wallpaper",
+        "draw",
+        "generate",
+        "create",
+        "make",
+        "show me",
+        "avatar",
+        "illustration",
+        "art",
+        "logo",
+        "poster"
+    ]
+
+    is_image_request = any(
+        keyword in message.lower()
+        for keyword in image_keywords
+    )
 
     if not message:
         return jsonify({
@@ -86,7 +111,7 @@ def chat():
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT message_count FROM users WHERE user_key=%s",
+        "SELECT message_count, image_count FROM users WHERE user_key=%s",
         (user_key,)
     )
 
@@ -94,8 +119,10 @@ def chat():
 
     if row:
         count = row[0]
+        image_count = row[1]
     else:
         count = 0
+        image_count = 0
 
     if count >= 5:
         cursor.close()
@@ -110,16 +137,60 @@ def chat():
 
     cursor.execute("""
     INSERT INTO users
-    (user_key, message_count)
-    VALUES (%s, %s)
+    (user_key, message_count, image_count)
+    VALUES (%s, %s, %s)
     ON DUPLICATE KEY UPDATE
     message_count=%s
-    """, (user_key, count, count))
+    """, (
+        user_key,
+        count,
+        image_count,
+        count
+    ))
 
     conn.commit()
     cursor.close()
     conn.close()
     try:
+        if is_image_request:
+
+            conn = get_db()
+            cursor = conn.cursor()
+
+            if image_count >= 1:
+                cursor.close()
+                conn.close()
+
+                return jsonify({
+                    "locked_image": True
+                })
+
+            image_count += 1
+
+            cursor.execute("""
+                UPDATE users
+                SET image_count=%s
+                WHERE user_key=%s
+            """, (image_count, user_key))
+
+            conn.commit()
+
+            cursor.close()
+            conn.close()
+
+            image_response = client.images.generate(
+                model="gpt-image-1",
+                prompt=message,
+                size="1024x1024"
+            )
+
+            return jsonify({
+                "type": "image",
+                "image": image_response.data[0].b64_json,
+                "remaining": max(0, 5 - count)
+            })
+
+
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[

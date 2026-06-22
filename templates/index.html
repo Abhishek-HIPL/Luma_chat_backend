@@ -34,10 +34,29 @@ margin: 0px;
     background-image: linear-gradient(270deg, #4ec7e4 0%, #53b2ac 100%);
     color:white;
     padding:15px;
-    /* text-align:center; */
     font-size:20px;
     font-weight:bold;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
 }
+
+.call-btn{
+    background:rgba(255,255,255,0.2);
+    border:none;
+    color:#fff;
+    font-size:18px;
+    cursor:pointer;
+    padding:8px 12px;
+    border-radius:50%;
+    margin-left:0;
+}
+
+.call-btn:hover{
+    background:rgba(255,255,255,0.3);
+}
+
 
 
 .chat-box{
@@ -202,6 +221,100 @@ p {
     scrollbar-color: #53b2ac rgba(255,255,255,0.15);
 }
 
+
+#imagePopup{
+    display:none;
+    position:fixed;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.4);
+}
+
+.typing-dots span{
+    animation: blink 1.4s infinite;
+}
+
+.typing-dots span:nth-child(2){
+    animation-delay: .2s;
+}
+
+.typing-dots span:nth-child(3){
+    animation-delay: .4s;
+}
+
+@keyframes blink{
+    0%,80%,100%{
+        opacity:.2;
+    }
+    40%{
+        opacity:1;
+    }
+}
+
+<!--css for image loader     -->
+.progress-wrapper{
+    text-align:left;
+    margin:10px 0;
+}
+
+.progress-circle{
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    background:conic-gradient(
+        #53b2ac 0deg,
+        #53b2ac 0deg,
+        #eee 0deg
+    );
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:bold;
+    color:#333;
+}
+
+.progress-circle span{
+    width:55px;
+    height:55px;
+    border-radius:50%;
+    background:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+.welcome-msg{
+    background:#fff;
+    border:1px solid #cfe7e7;
+    border-radius:16px;
+    padding:16px;
+    max-width:260px;
+    color:#3a3a3a;
+    line-height:1.5;
+    box-shadow:0 2px 5px rgba(0,0,0,.05);
+    margin-top:570px;
+}
+
+.welcome-msg strong{
+    display:block;
+    font-size:18px;
+    margin-bottom:8px;
+}
+
+.welcome-footer{
+    margin-top:15px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    color:#777;
+    font-size:13px;
+}
+
+
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
@@ -212,10 +325,37 @@ p {
 <div class="chat-container">
 
     <div class="chat-header">
-         AI Assistant
+    <span>Free Chat</span>
+
+    <button
+        class="call-btn"
+        onclick="showCallMessage()"
+    >
+        📞
+    </button>
+</div>
+
+    <div id="chatBox" class="chat-box">
+
+    <div id="welcomeCard" class="bot" style="display:none;">
+        <div class="welcome-msg">
+            <strong>Hey, I'm here for you.</strong><br><br>
+
+            Whether you want to chat,
+            explore ideas, share your
+            thoughts, or just have someone
+            to talk to, I'm all ears. What
+            would you like to talk about
+            today?
+
+            <div class="welcome-footer">
+                <span id="welcomeTime"></span>
+                <span>🔊</span>
+            </div>
+        </div>
     </div>
 
-    <div id="chatBox" class="chat-box"></div>
+</div>
 
     <div class="input-area">
         <input
@@ -260,6 +400,32 @@ p {
 
 </div>
 
+
+<div id="imagePopup">
+
+    <div class="popup-content">
+
+        <span class="close-btn" onclick="closeImagePopup()">
+            ✖
+        </span>
+
+        <h2>Free Image Limit Reached</h2>
+
+        <p>
+            You have already generated your free image.
+        </p>
+
+        <p>
+            Download the app to generate more images.
+        </p>
+
+        <a href="https://your-app-link.com" target="_blank">
+            Download App
+        </a>
+
+    </div>
+
+</div>
 <script>
 let visitorId = "";
 
@@ -275,18 +441,69 @@ let chatLocked = localStorage.getItem("chatLocked") === "true";
 
 window.onload = function(){
 
-    const savedChat = localStorage.getItem("chatHistory");
+    const savedChat =
+        localStorage.getItem("chatHistory");
 
     if(savedChat){
 
-        document.getElementById("chatBox").innerHTML = savedChat;
+        document.getElementById("chatBox").innerHTML =
+            savedChat;
 
-        const chatBox = document.getElementById("chatBox");
+        // remove old image loader
+        const oldLoader =
+            document.getElementById("image-loader");
 
-        chatBox.scrollTop = chatBox.scrollHeight;
+        if(oldLoader){
+            oldLoader.remove();
+        }
+
+        const welcomeCard =
+            document.getElementById("welcomeCard");
+
+        if(welcomeCard){
+            welcomeCard.remove();
+        }
+
+        const chatBox =
+            document.getElementById("chatBox");
+
+        chatBox.scrollTop =
+            chatBox.scrollHeight;
+    }
+    else{
+
+        document.getElementById(
+            "welcomeCard"
+        ).style.display = "block";
     }
 
+    const welcomeTime =
+        document.getElementById(
+            "welcomeTime"
+        );
+
+    if(welcomeTime){
+
+        const now = new Date();
+
+        welcomeTime.innerText =
+            now.toLocaleTimeString([],{
+                hour:"2-digit",
+                minute:"2-digit"
+            }).toLowerCase();
+    }
 }
+
+
+function getCurrentTime(){
+
+    return new Date().toLocaleTimeString([],{
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+}
+
+
 
 function addMessage(text,type){
 
@@ -296,8 +513,14 @@ function addMessage(text,type){
 
     div.className = type;
 
-    div.innerHTML =
-        `<span class="msg">${text}</span>`;
+    div.innerHTML = `
+        <div class="msg">
+            ${text}
+            <div class="msg-time">
+                ${getCurrentTime()}
+            </div>
+        </div>
+    `;
 
     chatBox.appendChild(div);
 
@@ -309,7 +532,118 @@ function addMessage(text,type){
     );
 }
 
+function addImage(base64Image){
+
+    const chatBox = document.getElementById("chatBox");
+
+    const div = document.createElement("div");
+
+    div.className = "bot";
+
+    div.innerHTML = `
+        <div>
+            <img
+                src="data:image/png;base64,${base64Image}"
+                style="
+                    max-width:300px;
+                    border-radius:10px;
+                    margin-top:10px;
+                "
+            >
+            <div class="msg-time">
+                ${getCurrentTime()}
+            </div>
+        </div>
+    `;
+
+    chatBox.appendChild(div);
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    localStorage.setItem(
+        "chatHistory",
+        chatBox.innerHTML
+    );
+}
+function completeImageLoader(){
+
+    clearInterval(progressInterval);
+
+    const circle =
+        document.getElementById(
+            "progressCircle"
+        );
+
+    const text =
+        document.getElementById(
+            "progressText"
+        );
+
+    if(circle && text){
+
+        circle.style.background =
+            "conic-gradient(#53b2ac 360deg,#53b2ac 360deg)";
+
+        text.innerText = "100%";
+    }
+
+    setTimeout(() => {
+
+        const loader =
+            document.getElementById(
+                "image-loader"
+            );
+
+        if(loader){
+            loader.remove();
+        }
+
+    },500);
+}
+
+
+function showTyping(){
+
+    const chatBox = document.getElementById("chatBox");
+
+    const div = document.createElement("div");
+
+    div.className = "bot";
+    div.id = "typing-indicator";
+
+    div.innerHTML = `
+        <span class="msg">
+            Typing
+            <span class="typing-dots">
+                <span>.</span>
+                <span>.</span>
+                <span>.</span>
+            </span>
+        </span>
+    `;
+
+    chatBox.appendChild(div);
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function removeTyping(){
+
+    const typing =
+        document.getElementById("typing-indicator");
+
+    if(typing){
+        typing.remove();
+    }
+}
+
 async function sendMessage(){
+const welcomeCard =
+    document.getElementById("welcomeCard");
+
+if(welcomeCard){
+    welcomeCard.remove();
+}
 
     if(chatLocked){
 
@@ -326,7 +660,36 @@ async function sendMessage(){
 
     addMessage(text,"user");
 
-    input.value = "";
+input.value = "";
+const imageWords = [
+    "image",
+        "picture",
+        "pic",
+        "photo",
+        "wallpaper",
+        "draw",
+        "generate",
+        "create",
+        "make",
+        "show me",
+        "avatar",
+        "illustration",
+        "art",
+        "logo",
+        "poster"
+];
+
+const isImageRequest =
+    imageWords.some(word =>
+        text.toLowerCase().includes(word)
+    );
+
+if(isImageRequest){
+    showImageLoader();
+}
+else{
+    showTyping();
+}
 
     try{
 
@@ -345,6 +708,24 @@ async function sendMessage(){
         );
 
         const data = await response.json();
+        removeTyping();
+        if(data.locked_image){
+
+    clearInterval(progressInterval);
+
+    const loader =
+        document.getElementById("image-loader");
+
+    if(loader){
+        loader.remove();
+    }
+
+    document.getElementById(
+        "imagePopup"
+    ).style.display = "flex";
+
+    return;
+}
 
         if(data.locked){
 
@@ -365,18 +746,32 @@ async function sendMessage(){
     return;
 }
 
-        addMessage(data.reply,"bot");
+        if(data.type === "image"){
+
+    completeImageLoader();
+
+    addImage(data.image);
+
+}
+else{
+
+    addMessage(data.reply,"bot");
+
+}
 
     }
     catch(err){
 
-        console.error(err);
 
-        addMessage(
-            "❌ Server Error",
-            "bot"
-        );
-    }
+    removeTyping();
+
+    console.error(err);
+
+    addMessage(
+        "❌ Server Error",
+        "bot"
+    );
+}
 }
 
 function handleKeyPress(event){
@@ -396,10 +791,20 @@ function closePopup(){
 window.onclick = function(event){
 
     const popup = document.getElementById("popup");
+    const imagePopup = document.getElementById("imagePopup");
 
     if(event.target === popup){
         popup.style.display = "none";
     }
+
+    if(event.target === imagePopup){
+        imagePopup.style.display = "none";
+    }
+}
+
+function closeImagePopup(){
+
+    document.getElementById("imagePopup").style.display = "none";
 
 }
 
@@ -412,6 +817,99 @@ window.onclick = function(event){
     location.reload();
 }
 
+    function closeImagePopup(){
+
+    document.getElementById(
+        "imagePopup"
+    ).style.display = "none";
+
+}
+
+let progressInterval = null;
+
+function showImageLoader(){
+
+    const chatBox =
+        document.getElementById("chatBox");
+
+    const div =
+        document.createElement("div");
+
+    div.className = "bot";
+    div.id = "image-loader";
+
+    div.innerHTML = `
+        <div class="progress-wrapper">
+            <div class="progress-circle" id="progressCircle">
+                <span id="progressText">0%</span>
+            </div>
+        </div>
+    `;
+
+    chatBox.appendChild(div);
+
+    let percent = 0;
+
+    progressInterval = setInterval(() => {
+
+        percent += 2;
+
+        if(percent > 95){
+            percent = 95;
+        }
+
+        const circle =
+            document.getElementById("progressCircle");
+
+        const text =
+            document.getElementById("progressText");
+
+        if(circle && text){
+
+            const deg = percent * 3.6;
+
+            circle.style.background =
+                `conic-gradient(
+                    #53b2ac ${deg}deg,
+                    #eee ${deg}deg
+                )`;
+
+            text.innerText =
+                percent + "%";
+        }
+
+    },200);
+}
+
+function completeImageLoader(){
+
+    clearInterval(progressInterval);
+
+    const circle =
+        document.getElementById("progressCircle");
+
+    const text =
+        document.getElementById("progressText");
+
+    if(circle && text){
+
+        circle.style.background =
+            "conic-gradient(#53b2ac 360deg,#53b2ac 360deg)";
+
+        text.innerText = "100%";
+    }
+
+    setTimeout(() => {
+
+        const loader =
+            document.getElementById("image-loader");
+
+        if(loader){
+            loader.remove();
+        }
+
+    },500);
+}
 </script>
 
 </body>
