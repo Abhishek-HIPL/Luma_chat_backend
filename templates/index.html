@@ -234,7 +234,18 @@ p {
     height:100%;
     background:rgba(0,0,0,0.4);
 }
-
+#callPopup{
+    display:none;
+    position:fixed;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.4);
+}
 .typing-dots span{
     animation: blink 1.4s infinite;
 }
@@ -314,6 +325,33 @@ p {
     font-size:13px;
 }
 
+#imageViewer{
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,.9);
+    justify-content:center;
+    align-items:center;
+    z-index:10000;
+}
+
+#fullImage{
+    max-width:95%;
+    max-height:95%;
+    border-radius:10px;
+}
+
+.image-close{
+    position:absolute;
+    top:20px;
+    right:25px;
+    color:white;
+    font-size:30px;
+    cursor:pointer;
+}
 
 </style>
 
@@ -405,18 +443,37 @@ p {
 
     <div class="popup-content">
 
-        <span class="close-btn" onclick="closeImagePopup()">
-            ✖
-        </span>
+        <span class="close-btn" onclick="closeImagePopup()">✖</span>
 
         <h2>Free Image Limit Reached</h2>
 
-        <p>
-            You have already generated your free image.
-        </p>
+        <p>You have already generated your free image.</p>
+
+        <p>Download the app to generate more images.</p>
+
+        <a href="https://your-app-link.com" target="_blank">
+            Download App
+        </a>
+
+    </div>
+
+</div>
+
+
+<div id="callPopup">
+
+    <div class="popup-content">
+
+        <span class="close-btn" onclick="closeCallPopup()">
+            ✖
+        </span>
+
+        <h2>Voice Call Feature</h2>
 
         <p>
-            Download the app to generate more images.
+            To explore this feature,
+            please download the APK
+            and try it out.
         </p>
 
         <a href="https://your-app-link.com" target="_blank">
@@ -425,6 +482,13 @@ p {
 
     </div>
 
+</div>
+<div id="imageViewer">
+    <span class="image-close" onclick="closeImageViewer()">
+        ✖
+    </span>
+
+    <img id="fullImage">
 </div>
 <script>
 let visitorId = "";
@@ -541,15 +605,18 @@ function addImage(base64Image){
     div.className = "bot";
 
     div.innerHTML = `
-        <div>
-            <img
-                src="data:image/png;base64,${base64Image}"
-                style="
-                    max-width:300px;
-                    border-radius:10px;
-                    margin-top:10px;
-                "
-            >
+        <img
+            src="data:image/png;base64,${base64Image}"
+
+            onclick="openImage(this.src)"
+            style="
+                max-width:300px;
+                border-radius:10px;
+                margin-top:10px;
+                cursor:pointer;
+            "
+        >
+
             <div class="msg-time">
                 ${getCurrentTime()}
             </div>
@@ -792,6 +859,7 @@ window.onclick = function(event){
 
     const popup = document.getElementById("popup");
     const imagePopup = document.getElementById("imagePopup");
+    const callPopup =document.getElementById("callPopup");
 
     if(event.target === popup){
         popup.style.display = "none";
@@ -800,6 +868,9 @@ window.onclick = function(event){
     if(event.target === imagePopup){
         imagePopup.style.display = "none";
     }
+    if(event.target === callPopup){
+    callPopup.style.display = "none";
+}
 }
 
 function closeImagePopup(){
@@ -910,7 +981,39 @@ function completeImageLoader(){
 
     },500);
 }
+
+function openImage(src){
+
+    document.getElementById("fullImage").src = src;
+
+    document.getElementById(
+        "imageViewer"
+    ).style.display = "flex";
+}
+
+function closeImageViewer(){
+
+    document.getElementById(
+        "imageViewer"
+    ).style.display = "none";
+}
+
+function showCallMessage(){
+
+    document.getElementById(
+        "callPopup"
+    ).style.display = "flex";
+}
+
+function closeCallPopup(){
+
+    document.getElementById(
+        "callPopup"
+    ).style.display = "none";
+}
 </script>
+
+
 
 </body>
 </html>

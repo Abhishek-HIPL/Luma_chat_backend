@@ -124,7 +124,7 @@ def chat():
         count = 0
         image_count = 0
 
-    if count >= 5:
+    if count >= 10:
         cursor.close()
         conn.close()
 
